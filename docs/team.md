@@ -6,11 +6,11 @@ title:  Team
 # {{ page.title }}
 
 
-## USER 1
-***UCI Net ID***: ucinetid1
+## Puru Gajare
+***UCI Net ID***: pgajare1
 
 ## Ria Achuthan
 ***UCI Net ID***: rachutha
 
-## USER 3
+## Sid Gupta
 ***UCI Net ID***: siddhg5
