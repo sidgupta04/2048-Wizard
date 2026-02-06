@@ -38,6 +38,8 @@ ACTIONS = {
     3: 'RIGHT'
 }
 
+from expectimax import expectimax_decision
+
 class Game2048:
     """
     The Game Logic Class.
@@ -169,6 +171,7 @@ class Pygame2048:
         self.previous_grid = None
         self.current_action = None
         self.new_tile_positions = {}  # Track tiles that need pop animation: (r, c) -> start_time
+        self.ai_mode = False
 
     def _get_tile_position(self, r, c):
         """Get the screen position for a grid cell."""
@@ -418,6 +421,33 @@ class Pygame2048:
                             
                             if done:
                                 print("Game Over Reached")
+
+                    if event.key == pygame.K_a:
+                        self.ai_mode = not self.ai_mode
+                        print(f"AI Mode: {'ON' if self.ai_mode else 'OFF'}")
+
+            # AI Logic
+            if self.ai_mode and not self.game.game_over and not self.animating:
+                # Add a small delay or check allows UI to breathe slightly? 
+                # Plan says: "At each solver step (when UI is idle and not animating)"
+                # Since we are in the main loop, this runs once per frame if conditions met.
+                
+                # We need to make sure we don't block the event loop for too long.
+                # But implementation plan says "compute best_move = expectimax_decision..."
+                
+                best_move = expectimax_decision(self.game.grid)
+                if best_move is not None:
+                     self.previous_grid = self.game.grid.copy()
+                     self.current_action = best_move
+                     
+                     _, _, done, moved = self.game.step(best_move)
+                     
+                     if moved:
+                         self.animating = True
+                         self.animation_start_time = time.time()
+                else:
+                    # No moves possible?
+                    pass
 
             self.draw_grid()
 
