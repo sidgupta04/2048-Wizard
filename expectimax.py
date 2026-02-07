@@ -1,5 +1,23 @@
 import random
 import numpy as np
+import logging
+import time
+
+logger = logging.getLogger('expectimax')
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter('%(message)s')
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+    
+    file_handler = logging.FileHandler('expectimax.log')
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
 
 # --- Expectimax AI Solver ---
 
@@ -152,7 +170,9 @@ def place_tile(grid, pos, value):
     new_grid[pos] = value
     return new_grid
 
-def expectimax_decision(grid, depth=3, samples=6):
+def expectimax_decision(grid, depth=3, samples=6, score=0):
+    start_time = time.time()
+    
     best_move = None
     best_val = float('-inf')
     
@@ -166,6 +186,10 @@ def expectimax_decision(grid, depth=3, samples=6):
         if val > best_val:
             best_val = val
             best_move = action
+    
+    elapsed_ms = (time.time() - start_time) * 1000
+    empty_tiles = len(get_empty_cells(grid))
+    logger.info(f"Move calc: {elapsed_ms:.1f}ms | Empty tiles: {empty_tiles} | Score: {score}")
             
     return best_move
 

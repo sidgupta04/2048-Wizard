@@ -435,7 +435,7 @@ class Pygame2048:
                 # We need to make sure we don't block the event loop for too long.
                 # But implementation plan says "compute best_move = expectimax_decision..."
                 
-                best_move = expectimax_decision(self.game.grid)
+                best_move = expectimax_decision(self.game.grid, score=self.game.score)
                 if best_move is not None:
                      self.previous_grid = self.game.grid.copy()
                      self.current_action = best_move
