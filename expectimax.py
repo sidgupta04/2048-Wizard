@@ -170,26 +170,85 @@ def place_tile(grid, pos, value):
     new_grid[pos] = value
     return new_grid
 
-def expectimax_decision(grid, depth=3, samples=6, score=0):
+def _evaluate_action(args):
+    """
+    Helper function for parallel execution.
+    Must be a top-level function for pickle serialization.
+    """
+    grid, action, depth, samples = args
+    new_grid, moved = simulate_move(grid, action)
+    if not moved:
+        return action, None  # Invalid move
+    val = expectimax_value(new_grid, depth, is_player=False, samples=samples)
+    return action, val
+
+
+# --- Persistent Process Pool ---
+# Created once when module loads, reused for all decisions.
+# Workers stay alive, eliminating repeated module imports.
+_executor = None
+
+def _get_executor():
+    """Get or create persistent process pool."""
+    global _executor
+    if _executor is None:
+        from concurrent.futures import ProcessPoolExecutor
+        _executor = ProcessPoolExecutor(max_workers=4)
+    return _executor
+
+def shutdown_executor():
+    """Shutdown the persistent pool (call on game exit)."""
+    global _executor
+    if _executor is not None:
+        _executor.shutdown(wait=False)
+        _executor = None
+
+
+def expectimax_decision(grid, depth=3, samples=6, score=0, parallel=True):
+    """
+    Decide the best move using Expectimax algorithm.
+    
+    Args:
+        grid: Current game state (4x4 numpy array)
+        depth: Search depth
+        samples: Number of samples for chance nodes
+        score: Current game score (for logging)
+        parallel: If True, evaluate moves in parallel using multiprocessing
+    """
+    from concurrent.futures import as_completed
+    
     start_time = time.time()
     
     best_move = None
     best_val = float('-inf')
     
-    # try each move, and find the one with the highest value
-    for action in range(4):
-        new_grid, moved = simulate_move(grid, action)
-        if not moved:
-            continue
-            
-        val = expectimax_value(new_grid, depth, is_player=False, samples=samples)
-        if val > best_val:
-            best_val = val
-            best_move = action
+    if parallel:
+        # Parallel evaluation using persistent pool
+        executor = _get_executor()
+        args_list = [(grid, action, depth, samples) for action in range(4)]
+        
+        futures = [executor.submit(_evaluate_action, args) for args in args_list]
+        
+        for future in as_completed(futures):
+            action, val = future.result()
+            if val is not None and val > best_val:
+                best_val = val
+                best_move = action
+    else:
+        # Sequential fallback (original behavior)
+        for action in range(4):
+            new_grid, moved = simulate_move(grid, action)
+            if not moved:
+                continue
+            val = expectimax_value(new_grid, depth, is_player=False, samples=samples)
+            if val > best_val:
+                best_val = val
+                best_move = action
     
     elapsed_ms = (time.time() - start_time) * 1000
     empty_tiles = len(get_empty_cells(grid))
-    logger.info(f"Move calc: {elapsed_ms:.1f}ms | Empty tiles: {empty_tiles} | Score: {score}")
+    mode = "parallel" if parallel else "sequential"
+    logger.info(f"Move calc ({mode}): {elapsed_ms:.1f}ms | Empty tiles: {empty_tiles} | Score: {score}")
             
     return best_move
 

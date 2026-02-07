@@ -29,7 +29,7 @@ def test_expectimax():
     # Let's just check it returns a valid move (0-3) and runs reasonably fast
     
     start = time.time()
-    move = expectimax_decision(grid, depth=3)
+    move = expectimax_decision(grid, depth=3, parallel=False)  # Use sequential for unit tests
     end = time.time()
     
     print(f"Best move: {move}")

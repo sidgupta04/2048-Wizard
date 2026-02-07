@@ -38,7 +38,7 @@ ACTIONS = {
     3: 'RIGHT'
 }
 
-from expectimax import expectimax_decision
+from expectimax import expectimax_decision, shutdown_executor
 
 class Game2048:
     """
@@ -451,6 +451,7 @@ class Pygame2048:
 
             self.draw_grid()
 
+        shutdown_executor()  # Clean up parallel workers
         pygame.quit()
 
 if __name__ == "__main__":
