@@ -1,6 +1,9 @@
 import numpy as np
 import time
-from expectimax import expectimax_decision, calculate_heuristic, simulate_move
+from expectimax import (
+    expectimax_decision, calculate_heuristic, simulate_move,
+    heuristic_max_tile, heuristic_corner_bias, heuristic_merge_potential
+)
 from game_2048 import Game2048
 
 def test_heuristics():
@@ -36,6 +39,29 @@ def test_expectimax():
     assert (end - start) < 1.0, "Decision took too long!" # Relaxed check, <100ms goal is soft
     print("PASS")
 
+def test_new_heuristics():
+    print("Testing New Heuristics...")
+    grid = np.zeros((4, 4), dtype=int)
+    grid[0, 0] = 1024 # Corner Max
+    grid[0, 1] = 1024 # Merge potential H
+    grid[1, 0] = 1024 # Merge potential V
+
+    # Test Max Tile
+    h_max = heuristic_max_tile(grid)
+    expected_max = np.log2(1024)
+    assert h_max == expected_max, f"Max Tile failed: {h_max} != {expected_max}"
+    
+    # Test Corner Bias (should be positive bonus)
+    h_corner = heuristic_corner_bias(grid)
+    assert h_corner > 0, "Should have corner bonus"
+
+    # Test Merge Potential (2 merges: 0,0-0,1 and 0,0-1,0)
+    h_merge = heuristic_merge_potential(grid)
+    assert h_merge == 2, f"Expected 2 merges, got {h_merge}"
+    
+    print("PASS (New Heuristics)")
+
 if __name__ == "__main__":
     test_heuristics()
+    test_new_heuristics()
     test_expectimax()

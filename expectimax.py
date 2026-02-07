@@ -9,16 +9,66 @@ def get_empty_cells(grid):
 def calculate_heuristic(grid):
     """
     Combined heuristic:
-    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth
+    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w4 * H_max + w5 * H_corner + w6 * H_merge
     """
     w1 = 2.7
     w2 = 1.0
     w3 = 0.1
+    w4 = 1.0  # Max Tile
+    w5 = 2.0  # Corner Bias
+    w6 = 0.8  # Merge Potential
     
-    return w1 * heuristic_empty(grid) + w2 * heuristic_monotonicity(grid) + w3 * heuristic_smoothness(grid)
+    return (
+        w1 * heuristic_empty(grid) + 
+        w2 * heuristic_monotonicity(grid) + 
+        w3 * heuristic_smoothness(grid) +
+        w4 * heuristic_max_tile(grid) +
+        w5 * heuristic_corner_bias(grid) +
+        w6 * heuristic_merge_potential(grid)
+    )
 
 def heuristic_empty(grid):
     return len(get_empty_cells(grid))
+
+def heuristic_max_tile(grid):
+    """Encourages building large tiles."""
+    max_val = np.max(grid)
+    if max_val == 0:
+        return 0
+    return np.log2(max_val)
+
+def heuristic_corner_bias(grid):
+    """Encourages keeping the largest tile in a corner."""
+    max_val = np.max(grid)
+    if max_val == 0:
+        return 0
+    
+    # Check 4 corners
+    rows, cols = grid.shape
+    corners = [
+        grid[0, 0], grid[0, cols-1],
+        grid[rows-1, 0], grid[rows-1, cols-1]
+    ]
+    
+    if max_val in corners:
+        return 2.0 * np.log2(max_val) # Bonus scaling with value
+    else:
+        return -2.0 * np.log2(max_val) # Penalty
+
+def heuristic_merge_potential(grid):
+    """Counts number of possible merges."""
+    merge_count = 0
+    # Horizontal
+    for r in range(4):
+        for c in range(3):
+            if grid[r, c] != 0 and grid[r, c] == grid[r, c+1]:
+                merge_count += 1
+    # Vertical
+    for c in range(4):
+        for r in range(3):
+            if grid[r, c] != 0 and grid[r, c] == grid[r+1, c]:
+                merge_count += 1
+    return merge_count
 
 def heuristic_monotonicity(grid):
     # Monotonicity mask (snake pattern)
@@ -106,7 +156,7 @@ def expectimax_decision(grid, depth=3, samples=6):
     best_move = None
     best_val = float('-inf')
     
-    # Iterate over all 4 possible actions
+    # try each move, and find the one with the highest value
     for action in range(4):
         new_grid, moved = simulate_move(grid, action)
         if not moved:
