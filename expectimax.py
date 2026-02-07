@@ -29,11 +29,11 @@ def calculate_heuristic(grid):
     Combined heuristic:
     score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w4 * H_max + w5 * H_corner + w6 * H_merge
     """
-    w1 = 2.7
-    w2 = 1.0
-    w3 = 0.1
+    w1 = 2.7  # Empty Tiles
+    w2 = 1.0  # Monotonicity
+    w3 = 0.1  # Smoothness
     w4 = 1.0  # Max Tile
-    w5 = 2.0  # Corner Bias
+    w5 = 3.0  # Corner Bias
     w6 = 0.8  # Merge Potential
     
     return (
@@ -49,14 +49,24 @@ def heuristic_empty(grid):
     return len(get_empty_cells(grid))
 
 def heuristic_max_tile(grid):
-    """Encourages building large tiles."""
+    """
+    Encourages building large tiles.
+
+    The higher the max tile, the higher this value.
+    """
     max_val = np.max(grid)
     if max_val == 0:
         return 0
     return np.log2(max_val)
 
 def heuristic_corner_bias(grid):
-    """Encourages keeping the largest tile in a corner."""
+    """
+    large benefit for having the max tile in any corner, which also scales
+    with the value of the max tile --> in late game this heuristic becomes more important 
+
+
+    note: may be conflicting with monotonicity which prioritizes top left corner
+    """
     max_val = np.max(grid)
     if max_val == 0:
         return 0
@@ -74,7 +84,9 @@ def heuristic_corner_bias(grid):
         return -2.0 * np.log2(max_val) # Penalty
 
 def heuristic_merge_potential(grid):
-    """Counts number of possible merges."""
+    """
+    Counts number of possible merges.
+    """
     merge_count = 0
     # Horizontal
     for r in range(4):
