@@ -27,20 +27,20 @@ def get_empty_cells(grid):
 def calculate_heuristic(grid):
     """
     Combined heuristic (all components normalized to [-1, 1]):
-    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w5 * H_corner + w6 * H_merge
+    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w4 * H_corner + w5 * H_merge
     """
     w1 = 2.7  # Empty Tiles
     w2 = 1.5  # Monotonicity
     w3 = 1.0  # Smoothness
-    w5 = 2.0  # Corner Bias
-    w6 = 1.0  # Merge Potential
+    w4 = 2.0  # Corner Bias
+    w5 = 1.0  # Merge Potential
     
     return (
         w1 * heuristic_empty(grid) + 
         w2 * heuristic_monotonicity(grid) + 
         w3 * heuristic_smoothness(grid) +
-        w5 * heuristic_corner_bias(grid) +
-        w6 * heuristic_merge_potential(grid)
+        w4 * heuristic_corner_bias(grid) +
+        w5 * heuristic_merge_potential(grid)
     )
 
 def heuristic_empty(grid):
