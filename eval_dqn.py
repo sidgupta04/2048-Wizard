@@ -1,0 +1,61 @@
+import numpy as np
+import torch
+from dqn_agent import DQNAgent
+from game_2048 import Game2048
+
+MODEL_PATH = "dqn_2048.pth"
+NUM_EVAL_EPISODES = 10
+MAX_STEPS = 10000
+
+
+def preprocess_state(grid):
+    """
+    Log-scale preprocessing:
+    empty tiles -> 0
+    tile value v -> log2(v)
+    """
+    return np.where(grid == 0, 0, np.log2(grid)).flatten()
+
+
+def evaluate():
+    agent = DQNAgent()
+    agent.q_network.load_state_dict(torch.load(MODEL_PATH, map_location=agent.device))
+    agent.q_network.eval()
+    agent.epsilon = 0.0
+
+    game = Game2048()
+    scores = []
+    max_tiles = []
+
+    for episode in range(NUM_EVAL_EPISODES):
+        grid = game.reset()
+        state = preprocess_state(grid)
+        done = False
+        steps = 0
+
+        while not done and steps < MAX_STEPS:
+            action = agent.action(state)
+            next_grid, reward, done, moved = game.step(action)
+
+            state = preprocess_state(next_grid)
+            steps += 1
+
+        scores.append(game.score)
+        max_tiles.append(game.grid.max())
+
+        print(
+            f"Eval Episode {episode:2d} | "
+            f"Score: {game.score:6d} | "
+            f"Max Tile: {game.grid.max():4d} | "
+            f"Steps: {steps}"
+        )
+
+    print("\n=== Evaluation Summary ===")
+    print(f"Average Score: {np.mean(scores):.1f}")
+    print(f"Max Score:     {np.max(scores)}")
+    print(f"Average Tile:  {np.mean(max_tiles):.1f}")
+    print(f"Max Tile Seen: {np.max(max_tiles)}")
+
+
+if __name__ == "__main__":
+    evaluate()

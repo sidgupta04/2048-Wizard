@@ -423,6 +423,19 @@ class Pygame2048:
 
         pygame.quit()
 
+    def game_events(self):
+        events = []
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                events.append("QUIT")
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    events.append("RESTART")
+        return events
+
+    def quit(self):
+        pygame.quit()
+
 if __name__ == "__main__":
     logic = Game2048()
     ui = Pygame2048(logic)
