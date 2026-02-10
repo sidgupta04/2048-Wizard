@@ -26,67 +26,54 @@ def get_empty_cells(grid):
 
 def calculate_heuristic(grid):
     """
-    Combined heuristic:
-    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w4 * H_max + w5 * H_corner + w6 * H_merge
+    Combined heuristic (all components normalized to [-1, 1]):
+    score = w1 * H_empty + w2 * H_mono + w3 * H_smooth + w5 * H_corner + w6 * H_merge
     """
     w1 = 2.7  # Empty Tiles
-    w2 = 1.0  # Monotonicity
-    w3 = 0.1  # Smoothness
-    w4 = 1.0  # Max Tile
-    w5 = 3.0  # Corner Bias
-    w6 = 0.8  # Merge Potential
+    w2 = 1.5  # Monotonicity
+    w3 = 1.0  # Smoothness
+    w5 = 2.0  # Corner Bias
+    w6 = 1.0  # Merge Potential
     
     return (
         w1 * heuristic_empty(grid) + 
         w2 * heuristic_monotonicity(grid) + 
         w3 * heuristic_smoothness(grid) +
-        w4 * heuristic_max_tile(grid) +
         w5 * heuristic_corner_bias(grid) +
         w6 * heuristic_merge_potential(grid)
     )
 
 def heuristic_empty(grid):
-    return len(get_empty_cells(grid))
+    '''Normalized to [0, 1]: 0 = no empty cells, 1 = all 16 empty'''
+    return len(get_empty_cells(grid)) / 16.0
 
-def heuristic_max_tile(grid):
-    """
-    Encourages building large tiles.
-
-    The higher the max tile, the higher this value.
-    """
-    max_val = np.max(grid)
-    if max_val == 0:
-        return 0
-    return np.log2(max_val)
+# heuristic_max_tile removed — implicitly captured by monotonicity and corner bias
 
 def heuristic_corner_bias(grid):
-    """
-    large benefit for having the max tile in any corner, which also scales
-    with the value of the max tile --> in late game this heuristic becomes more important 
-
+    '''
+    Normalized to [-1, 1].
+    +1 if max tile is in any corner, -1 otherwise.
+    Scales with log2(max_tile) so late-game positioning matters more.
 
     note: may be conflicting with monotonicity which prioritizes top left corner
-    """
+    '''
     max_val = np.max(grid)
     if max_val == 0:
         return 0
     
-    # Check 4 corners
-    rows, cols = grid.shape
-    corners = [
-        grid[0, 0], grid[0, cols-1],
-        grid[rows-1, 0], grid[rows-1, cols-1]
-    ]
+    corners = [grid[0, 0], grid[0, 3], grid[3, 0], grid[3, 3]]
+    log_max = np.log2(max_val)
+    MAX_LOG = 11.0  # log2(2048)
     
     if max_val in corners:
-        return 2.0 * np.log2(max_val) # Bonus scaling with value
+        return log_max / MAX_LOG   # [0, 1]
     else:
-        return -2.0 * np.log2(max_val) # Penalty
+        return -log_max / MAX_LOG  # [-1, 0]
 
 def heuristic_merge_potential(grid):
-    """
-    Counts number of possible merges.
-    """
+    '''
+    Normalized to [0, 1]: count of adjacent equal pairs / 24 (theoretical max).
+    '''
     merge_count = 0
     # Horizontal
     for r in range(4):
@@ -98,26 +85,36 @@ def heuristic_merge_potential(grid):
         for r in range(3):
             if grid[r, c] != 0 and grid[r, c] == grid[r+1, c]:
                 merge_count += 1
-    return merge_count
+    return merge_count / 24.0
+
+# Precompute snake-pattern weight matrix and normalization constant
+_MONO_W = np.array([
+    [16, 15, 14, 13],
+    [ 9, 10, 11, 12],
+    [ 8,  7,  6,  5],
+    [ 1,  2,  3,  4]
+])
+_MONO_MAX = float(np.sum(_MONO_W)) * 11.0  # sum(W) * log2(2048) ≈ 1496
 
 def heuristic_monotonicity(grid):
-    # Monotonicity mask (snake pattern)
-    # Higher weights in top-left corner
-    W = np.array([
-        [16, 15, 14, 13],
-        [ 9, 10, 11, 12],
-        [ 8,  7,  6,  5],
-        [ 1,  2,  3,  4]
-    ])
-    
+    '''
+    Normalized to [0, 1].
+    Monotonicity mask (snake pattern) — higher weights in top-left corner.
+    '''
     score = 0
     for r in range(4):
         for c in range(4):
             if grid[r, c] > 0:
-                score += W[r, c] * np.log2(grid[r, c])
-    return score
+                score += _MONO_W[r, c] * np.log2(grid[r, c])
+    return score / _MONO_MAX
+
+_SMOOTH_MAX_PENALTY = 44.0  # practical worst-case total penalty
 
 def heuristic_smoothness(grid):
+    '''
+    Normalized to [-1, 0].
+    Penalty only — larger differences between adjacent tiles → more negative.
+    '''
     score = 0
     # Horizontal
     for r in range(4):
@@ -133,7 +130,7 @@ def heuristic_smoothness(grid):
                 v1 = np.log2(grid[r, c])
                 v2 = np.log2(grid[r+1, c])
                 score -= abs(v1 - v2)
-    return score
+    return score / _SMOOTH_MAX_PENALTY
 
 def simulate_move(grid, action):
     """

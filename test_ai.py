@@ -2,7 +2,7 @@ import numpy as np
 import time
 from expectimax import (
     expectimax_decision, calculate_heuristic, simulate_move,
-    heuristic_max_tile, heuristic_corner_bias, heuristic_merge_potential
+    heuristic_corner_bias, heuristic_merge_potential
 )
 from game_2048 import Game2048
 
@@ -45,19 +45,14 @@ def test_new_heuristics():
     grid[0, 0] = 1024 # Corner Max
     grid[0, 1] = 1024 # Merge potential H
     grid[1, 0] = 1024 # Merge potential V
-
-    # Test Max Tile
-    h_max = heuristic_max_tile(grid)
-    expected_max = np.log2(1024)
-    assert h_max == expected_max, f"Max Tile failed: {h_max} != {expected_max}"
     
-    # Test Corner Bias (should be positive bonus)
+    # Test Corner Bias (should be positive bonus, normalized to [0, 1])
     h_corner = heuristic_corner_bias(grid)
-    assert h_corner > 0, "Should have corner bonus"
+    assert 0 < h_corner <= 1, f"Should have corner bonus in (0,1], got {h_corner}"
 
-    # Test Merge Potential (2 merges: 0,0-0,1 and 0,0-1,0)
+    # Test Merge Potential (2 merges: 0,0-0,1 and 0,0-1,0, normalized by /24)
     h_merge = heuristic_merge_potential(grid)
-    assert h_merge == 2, f"Expected 2 merges, got {h_merge}"
+    assert abs(h_merge - 2/24.0) < 1e-9, f"Expected 2/24, got {h_merge}"
     
     print("PASS (New Heuristics)")
 
