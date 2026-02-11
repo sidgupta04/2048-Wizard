@@ -4,8 +4,8 @@ from dqn_agent import DQNAgent
 from game_2048 import Game2048
 
 MODEL_PATH = "dqn_2048.pth"
-NUM_EVAL_EPISODES = 10
-MAX_STEPS = 10000
+NUM_EVAL_EPISODES = 100
+MAX_STEPS = 5000
 
 
 def preprocess_state(grid):
@@ -34,8 +34,21 @@ def evaluate():
         steps = 0
 
         while not done and steps < MAX_STEPS:
-            action = agent.action(state)
-            next_grid, reward, done, moved = game.step(action)
+            with torch.no_grad():
+                q_values = agent.q_network(
+                    torch.FloatTensor(state).unsqueeze(0).to(agent.device)
+                ).squeeze(0)
+
+            actions = torch.argsort(q_values, descending=True).tolist()
+
+            moved = False
+            for action in actions:
+                next_grid, reward, done, moved = game.step(action)
+                if moved:
+                    break
+
+            if not moved:
+                done = True
 
             state = preprocess_state(next_grid)
             steps += 1

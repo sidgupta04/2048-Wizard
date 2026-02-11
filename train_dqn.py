@@ -3,12 +3,18 @@ import torch
 from dqn_agent import DQNAgent
 from game_2048 import Game2048
 
-NUM_EPISODES = 1000
-MAX_STEPS = 10000
+NUM_EPISODES = 500
+MAX_STEPS = 2000
 INVALID_MOVE_PENALTY = -5
 
 SAVE_MODEL_PATH = "dqn_2048.pth"
 LOG_FILE = "training_log.txt"
+
+def preprocess_state(grid):
+    state = np.zeros_like(grid, dtype=np.float32)
+    mask = grid > 0
+    state[mask] = np.log2(grid[mask])
+    return state.flatten()
 
 def train():
     agent = DQNAgent()
@@ -19,7 +25,7 @@ def train():
 
         for episode in range(NUM_EPISODES):
             grid = game.reset()
-            state = grid.flatten()
+            state = preprocess_state(grid)
             done = False
             steps = 0
 
@@ -29,14 +35,27 @@ def train():
 
                 if not moved:
                     reward = INVALID_MOVE_PENALTY
+                else:
+                    if reward > 0:
+                        reward = np.log2(reward)
 
-                next_state = next_grid.flatten()
+                    empty_tiles = np.sum(next_grid == 0)
+                    reward += 0.01 * empty_tiles
+                
+                if done:
+                    reward += 0.1 * np.log2(np.max(next_grid))
+
+                next_state = preprocess_state(next_grid)
                 agent.store(state, action, reward, next_state, done)
                 agent.train()
 
                 state = next_state
                 steps += 1
 
+            agent.epsilon = max(
+            agent.epsilon * agent.epsilon_decay,
+            agent.epsilon_min
+            )
             line = f"{episode},{game.score},{agent.epsilon:.3f},{steps}\n"
             f.write(line)
 

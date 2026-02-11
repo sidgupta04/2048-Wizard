@@ -90,9 +90,6 @@ class DQNAgent:
         loss.backward()
         self.optimizer.step()
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
         self.learn_step += 1
         if self.learn_step % self.target_update_freq == 0:
             self.target_network.load_state_dict(self.q_network.state_dict())
