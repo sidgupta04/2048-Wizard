@@ -61,7 +61,8 @@ def heuristic_corner_bias(grid):
     if max_val == 0:
         return 0
     
-    corners = [grid[0, 0], grid[0, 3], grid[3, 0], grid[3, 3]]
+    # corners = [grid[0, 0], grid[0, 3], grid[3, 0], grid[3, 3]]
+    corners = [grid[0, 0]]
     log_max = np.log2(max_val)
     MAX_LOG = 11.0  # log2(2048)
     

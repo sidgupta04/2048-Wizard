@@ -6,3 +6,4 @@ expectimax.log
 expectimax_single_threaded.log
 expectimax_multi_threaded.log
 game_results.pkl
+all_500_game_results.pkl
