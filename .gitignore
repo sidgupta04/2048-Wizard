@@ -1,0 +1,6 @@
+expectimax.log
+expectimax_single_threaded.log
+all_500_game_results.pkl
+.venv
+.vscode
+__pycache__
