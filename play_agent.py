@@ -8,7 +8,6 @@ from game_2048 import Game2048, Pygame2048
 MODEL_PATH = "dqn_2048.pth"
 MOVE_DELAY = 0.15
 
-
 def preprocess_state(grid):
     state = np.zeros_like(grid, dtype=np.float32)
     mask = grid > 0
@@ -81,7 +80,6 @@ def play():
         time.sleep(MOVE_DELAY)
 
     ui.quit()
-
 
 if __name__ == "__main__":
     play()
