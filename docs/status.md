@@ -27,7 +27,7 @@ Expectimax is an algorithm based on MiniMax, which is a tree based algorithm des
 
 To account for this, expectimax incorporates an average tile as the opposing player, which models the average of different possibilities for spawn locations and spawn values (2 with 90% chance and 4 with 10% chance). Using a scoring function, each hypothetical board state is given a score, determined by various heuristics. These board scores are averaged across possibilities to attain a chance node score which is inserted into the tree. 
  
-![The tree is then traversed to a certain depth (we found depth 3 to be the best balance of performance and accuracy in our case) to choose the move that maximizes score.](../docs/ExpectimaxGraph.png)
+![The tree is then traversed to a certain depth (we found depth 3 to be the best balance of performance and accuracy in our case) to choose the move that maximizes score.](./ExpectimaxGraph.png)
 
 ### Deep Q-Learning
 Deep Q Learning (DQN) is a value-based reinforcement learning algorithm. Instead of searching a game tree like Expectimax, DQN learns a function that directly predicts the long-term value of each move from a given board state.
@@ -57,6 +57,7 @@ The network is trained using this equation:  Q(s,a)←r+γa′max​Q(s′,a′)
 The 4x4 board is transformed as: tile value v→log2​(v)
 Empty tiles are represented as 0. This helps compress large tile numbers into more stable numeric values.
 
-<u>Rewards:</u>
+Rewards:
+
 To guide learning, we modified the reward to have an invalid move penalty, a merge reward of log2, empty tile bonus, and terminal bonus. 
 
