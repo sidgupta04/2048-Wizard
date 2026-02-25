@@ -25,11 +25,8 @@ def test_expectimax():
     grid[3, 3] = 2
     grid[3, 2] = 2
     
-    # Should prefer moving to combine them (Right or Left or Down depending on others)
-    # Let's just check it returns a valid move (0-3) and runs reasonably fast
-    
     start = time.time()
-    move = expectimax_decision(grid, depth=3, parallel=False)  # Use sequential for unit tests
+    move = expectimax_decision(grid, depth=3, parallel=False)
     end = time.time()
     
     print(f"Best move: {move}")
@@ -42,15 +39,13 @@ def test_expectimax():
 def test_new_heuristics():
     print("Testing New Heuristics...")
     grid = np.zeros((4, 4), dtype=int)
-    grid[0, 0] = 1024 # Corner Max
-    grid[0, 1] = 1024 # Merge potential H
-    grid[1, 0] = 1024 # Merge potential V
+    grid[0, 0] = 1024
+    grid[0, 1] = 1024
+    grid[1, 0] = 1024
     
-    # Test Corner Bias (should be positive bonus, normalized to [0, 1])
     h_corner = heuristic_corner_bias(grid)
     assert 0 < h_corner <= 1, f"Should have corner bonus in (0,1], got {h_corner}"
 
-    # Test Merge Potential (2 merges: 0,0-0,1 and 0,0-1,0, normalized by /24)
     h_merge = heuristic_merge_potential(grid)
     assert abs(h_merge - 2/24.0) < 1e-9, f"Expected 2/24, got {h_merge}"
     
