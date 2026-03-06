@@ -4,8 +4,7 @@ import numpy as np
 import time
 
 # --- Constants ---
-WIDTH, HEIGHT = 450, 500
-GRID_SIZE = 4
+DEFAULT_GRID_SIZE = 4
 TILE_SIZE = 100
 PADDING = 10
 BACKGROUND_COLOR = (187, 173, 160)
@@ -45,8 +44,8 @@ class Game2048:
     The Game Logic Class.
     Designed to be compatible with RL environments (like OpenAI Gym).
     """
-    def __init__(self):
-        self.grid_size = GRID_SIZE
+    def __init__(self, grid_size=DEFAULT_GRID_SIZE):
+        self.grid_size = grid_size
         self.last_spawned_tile = None  # Track newly spawned tile position
         self.reset()
 
@@ -160,8 +159,13 @@ class Pygame2048:
     def __init__(self, game_logic):
         pygame.init()
         self.game = game_logic
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("2048 - RL Friendly")
+        self.grid_size = game_logic.grid_size
+        width = self.grid_size * TILE_SIZE + PADDING * (self.grid_size + 1)
+        height = self.grid_size * TILE_SIZE + PADDING * (self.grid_size + 1) + 50
+        self.width = width
+        self.height = height
+        self.screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption(f"2048 ({self.grid_size}x{self.grid_size})")
         self.font = pygame.font.Font(pygame.font.get_default_font(), 36)
         self.score_font = pygame.font.Font(pygame.font.get_default_font(), 24)
         
@@ -199,12 +203,12 @@ class Pygame2048:
         curr_rotated = np.rot90(curr_grid, k)
         
         # Track movements row by row
-        for r in range(GRID_SIZE):
+        for r in range(self.grid_size):
             # Build lists of tile positions and values in this row
             prev_tiles = []  # (col, value)
             curr_tiles = []  # (col, value)
             
-            for c in range(GRID_SIZE):
+            for c in range(self.grid_size):
                 if prev_rotated[r, c] != 0:
                     prev_tiles.append((c, prev_rotated[r, c]))
                 if curr_rotated[r, c] != 0:
@@ -257,11 +261,11 @@ class Pygame2048:
         if k == 0:
             return (r, c)
         elif k == 1:  # 90 deg counter-clockwise
-            return (c, GRID_SIZE - 1 - r)
+            return (c, self.grid_size - 1 - r)
         elif k == 2:  # 180 deg
-            return (GRID_SIZE - 1 - r, GRID_SIZE - 1 - c)
+            return (self.grid_size - 1 - r, self.grid_size - 1 - c)
         elif k == 3:  # 90 deg clockwise
-            return (GRID_SIZE - 1 - c, r)
+            return (self.grid_size - 1 - c, r)
         return (r, c)
     
     def draw_grid(self):
@@ -269,7 +273,7 @@ class Pygame2048:
         
         # Draw Score
         score_text = self.score_font.render(f"Score: {self.game.score}", True, (255, 255, 255))
-        self.screen.blit(score_text, (10, HEIGHT - 40))
+        self.screen.blit(score_text, (10, self.height - 40))
 
         grid = self.game.grid
         current_time = time.time()
@@ -296,15 +300,15 @@ class Pygame2048:
             movements = self._calculate_tile_movement(self.previous_grid, grid, self.current_action)
         
         # Draw empty tiles first
-        for r in range(GRID_SIZE):
-            for c in range(GRID_SIZE):
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
                 rect_x, rect_y = self._get_tile_position(r, c)
                 rect = pygame.Rect(rect_x, rect_y, TILE_SIZE - PADDING, TILE_SIZE - PADDING)
                 pygame.draw.rect(self.screen, EMPTY_TILE_COLOR, rect, border_radius=5)
         
         # Draw tiles with animation
-        for r in range(GRID_SIZE):
-            for c in range(GRID_SIZE):
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
                 value = grid[r][c]
                 if value == 0:
                     continue
@@ -361,17 +365,17 @@ class Pygame2048:
                     self.screen.blit(text_surface, text_rect)
         
         if self.game.game_over:
-            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             overlay.fill((255, 255, 255, 128))
             self.screen.blit(overlay, (0, 0))
             final_score_text = self.score_font.render(f"Final Score: {self.game.score}", True, (0, 0, 0))
-            final_score_rect = final_score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+            final_score_rect = final_score_text.get_rect(center=(self.width // 2, self.height // 2 - 50))
             self.screen.blit(final_score_text, final_score_rect)
             game_over_text = self.font.render("Game Over!", True, (0, 0, 0))
-            text_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+            text_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2))
             self.screen.blit(game_over_text, text_rect)
             restart_text = self.score_font.render("Press 'R' to Restart", True, (50, 50, 50))
-            restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
+            restart_rect = restart_text.get_rect(center=(self.width // 2, self.height // 2 + 50))
             self.screen.blit(restart_text, restart_rect)
 
         pygame.display.flip()
@@ -455,6 +459,12 @@ class Pygame2048:
         pygame.quit()
 
 if __name__ == "__main__":
-    logic = Game2048()
+    import argparse
+    parser = argparse.ArgumentParser(description="Play 2048")
+    parser.add_argument("--size", type=int, default=4, choices=[4, 5],
+                        help="Grid size (default: 4)")
+    args = parser.parse_args()
+
+    logic = Game2048(grid_size=args.size)
     ui = Pygame2048(logic)
     ui.run()

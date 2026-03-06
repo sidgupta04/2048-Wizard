@@ -7,8 +7,8 @@ from game_2048 import Game2048
 from expectimax import expectimax_decision, shutdown_executor
 
 
-def run_single_game(game_index, total_games):
-    game = Game2048()
+def run_single_game(game_index, total_games, grid_size=4):
+    game = Game2048(grid_size=grid_size)
     game.reset()
 
     history = []
@@ -56,6 +56,10 @@ def main():
         "--output", type=str, default="game_results.pkl",
         help="Output pickle file path (default: game_results.pkl)"
     )
+    parser.add_argument(
+        "--size", type=int, default=4, choices=[4, 5],
+        help="Grid size (default: 4)"
+    )
     args = parser.parse_args()
 
     num_games = args.num_games
@@ -70,7 +74,7 @@ def main():
 
     try:
         for i in range(num_games):
-            history, score, max_tile = run_single_game(i, num_games)
+            history, score, max_tile = run_single_game(i, num_games, grid_size=args.size)
             all_games.append(history)
             scores.append(score)
             max_tiles.append(max_tile)

@@ -38,14 +38,14 @@ def calculate_heuristic(grid):
     )
 
 def heuristic_empty(grid):
-    return len(get_empty_cells(grid)) / 16.0
+    n = grid.shape[0]
+    return len(get_empty_cells(grid)) / float(n * n)
 
 def heuristic_corner_bias(grid):
     max_val = np.max(grid)
     if max_val == 0:
         return 0
     
-    # corners = [grid[0, 0], grid[0, 3], grid[3, 0], grid[3, 3]]
     corners = [grid[0, 0]]
     log_max = np.log2(max_val)
     MAX_LOG = 11.0 
@@ -56,52 +56,71 @@ def heuristic_corner_bias(grid):
         return -log_max / MAX_LOG
 
 def heuristic_merge_potential(grid):
+    n = grid.shape[0]
     merge_count = 0
-    for r in range(4):
-        for c in range(3):
+    for r in range(n):
+        for c in range(n - 1):
             if grid[r, c] != 0 and grid[r, c] == grid[r, c+1]:
                 merge_count += 1
-    for c in range(4):
-        for r in range(3):
+    for c in range(n):
+        for r in range(n - 1):
             if grid[r, c] != 0 and grid[r, c] == grid[r+1, c]:
                 merge_count += 1
-    return merge_count / 24.0
+    return merge_count / float(2 * n * (n - 1))
 
-_MONO_W = np.array([
-    [16, 15, 14, 13],
-    [ 9, 10, 11, 12],
-    [ 8,  7,  6,  5],
-    [ 1,  2,  3,  4]
-])
-_MONO_MAX = float(np.sum(_MONO_W)) * 11.0
+_mono_cache = {}
+
+def _get_mono_constants(n):
+    if n not in _mono_cache:
+        w = np.zeros((n, n), dtype=int)
+        val = n * n
+        for r in range(n):
+            cols = range(n) if r % 2 == 0 else range(n - 1, -1, -1)
+            for c in cols:
+                w[r, c] = val
+                val -= 1
+        _mono_cache[n] = (w, float(np.sum(w)) * 11.0)
+    return _mono_cache[n]
 
 def heuristic_monotonicity(grid):
+    n = grid.shape[0]
+    mono_w, mono_max = _get_mono_constants(n)
     score = 0
-    for r in range(4):
-        for c in range(4):
+    for r in range(n):
+        for c in range(n):
             if grid[r, c] > 0:
-                score += _MONO_W[r, c] * np.log2(grid[r, c])
-    return score / _MONO_MAX
+                score += mono_w[r, c] * np.log2(grid[r, c])
+    return score / mono_max
 
-_SMOOTH_MAX_PENALTY = 44.0
+_smooth_cache = {}
+
+def _get_smooth_max_penalty(n):
+    if n not in _smooth_cache:
+        # original value was 44.0 for n=4 (24 adjacent pairs)
+        # scale proportionally for other grid sizes
+        pairs = 2 * n * (n - 1)
+        _smooth_cache[n] = 44.0 * pairs / 24.0
+    return _smooth_cache[n]
 
 def heuristic_smoothness(grid):
+    n = grid.shape[0]
     score = 0
-    for r in range(4):
-        for c in range(3):
+    for r in range(n):
+        for c in range(n - 1):
             if grid[r, c] > 0 and grid[r, c+1] > 0:
                 v1 = np.log2(grid[r, c])
                 v2 = np.log2(grid[r, c+1])
                 score -= abs(v1 - v2)
-    for c in range(4):
-        for r in range(3):
+    for c in range(n):
+        for r in range(n - 1):
             if grid[r, c] > 0 and grid[r+1, c] > 0:
                 v1 = np.log2(grid[r, c])
                 v2 = np.log2(grid[r+1, c])
                 score -= abs(v1 - v2)
-    return score / _SMOOTH_MAX_PENALTY
+    return score / _get_smooth_max_penalty(n)
 
 def simulate_move(grid, action):
+    n = grid.shape[0]
     grid_copy = grid.copy()
     
     rotations = {0: 1, 1: 3, 2: 0, 3: 2}
@@ -110,18 +129,18 @@ def simulate_move(grid, action):
     grid_copy = np.rot90(grid_copy, k)
     
     def compress(mat):
-        new_mat = np.zeros((4, 4), dtype=int)
-        for i in range(4):
+        new_mat = np.zeros((n, n), dtype=int)
+        for i in range(n):
             pos = 0
-            for j in range(4):
+            for j in range(n):
                 if mat[i][j] != 0:
                     new_mat[i][pos] = mat[i][j]
                     pos += 1
         return new_mat
 
     def merge(mat):
-        for i in range(4):
-            for j in range(3):
+        for i in range(n):
+            for j in range(n - 1):
                 if mat[i][j] != 0 and mat[i][j] == mat[i][j + 1]:
                     mat[i][j] *= 2
                     mat[i][j + 1] = 0
