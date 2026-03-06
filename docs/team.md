@@ -12,5 +12,5 @@ title:  Team
 ## Ria Achuthan
 ***UCI Net ID***: rachutha
 
-## Sid Gupta
+## Siddharth Gupta
 ***UCI Net ID***: siddhg5
