@@ -4,3 +4,4 @@ all_500_game_results.pkl
 .venv
 .vscode
 __pycache__
+all_500_game_results_5x5.pkl
