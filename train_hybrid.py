@@ -16,6 +16,41 @@ def preprocess_state(grid):
     state[mask] = np.log2(grid[mask])
     return state.flatten()
 
+
+def monotonicity_bonus(grid):
+    """
+    Reward the agent for keeping tiles in a monotonic (snake-like) order.
+    A monotonic board means large tiles cluster in a corner, which is the
+    key strategy for reaching high tiles in 2048.
+    """
+    bonus = 0.0
+    n = grid.shape[0]
+    for row in grid:
+        bonus += max(
+            sum(row[i] >= row[i+1] for i in range(n - 1)),
+            sum(row[i] <= row[i+1] for i in range(n - 1)),
+        )
+    for col in grid.T:
+        bonus += max(
+            sum(col[i] >= col[i+1] for i in range(n - 1)),
+            sum(col[i] <= col[i+1] for i in range(n - 1)),
+        )
+    return bonus / (2 * n * (n - 1))
+
+
+def corner_bonus(grid):
+    """
+    Reward the agent for keeping the highest tile in the top-left corner.
+    The bonus scales with the value of the max tile so it stays meaningful
+    as the game progresses.
+    """
+    max_val = grid.max()
+    if max_val == 0:
+        return 0.0
+    if grid[0][0] == max_val:
+        return np.log2(max_val) / 11.0
+    return 0.0
+
 def train():
     agent = DQNAgent()
 
@@ -50,6 +85,12 @@ def train():
 
                     empty_tiles = np.sum(next_grid == 0)
                     reward += 0.01 * empty_tiles
+
+                    # Monotonicity bonus: encourages snake/corner strategy
+                    reward += 0.5 * monotonicity_bonus(next_grid)
+
+                    # Corner bonus: reward for keeping max tile in top-left
+                    reward += 0.5 * corner_bonus(next_grid)
                 
                 if done:
                     reward += 0.1 * np.log2(np.max(next_grid))
