@@ -1,13 +1,21 @@
 """
-Graph metrics from Expectimax game results (all_500_game_results.pkl).
+Graph metrics from Expectimax game results.
+Usage:
+  python graph_metrics.py                              # defaults to 5x5 pkl
+  python graph_metrics.py all_500_game_results.pkl      # use the 4x4 pkl
+
+If the pkl contains more than 190 games, only the first 190 are used
+so that results are directly comparable across board sizes.
+
 Plots:
   - Running maximum highest tile vs game index (assumes pkl order = play order).
   - Per-game highest tile scatter.
-  - Order-independent: counts and cumulative % that reached at least X.
+  - Order-independent: counts of games by highest tile reached.
   - Game length (moves) vs highest tile reached.
   - Max tile over move index (average progression).
 """
 
+import sys
 import pickle
 import numpy as np
 
@@ -16,10 +24,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-PKL_PATH = "all_500_game_results.pkl"
+DEFAULT_PKL = "all_500_game_results_5x5.pkl"
+MAX_GAMES = 190
 
 # 2048 tile values for axis labels
-TILE_LABELS = [128, 256, 512, 1024, 2048, 4096]
+TILE_LABELS = [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]
 
 
 def highest_tile_in_trajectory(trajectory):
@@ -30,11 +39,21 @@ def highest_tile_in_trajectory(trajectory):
 
 
 def main():
-    with open(PKL_PATH, "rb") as f:
+    pkl_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PKL
+    print(f"Loading results from: {pkl_path}")
+
+    with open(pkl_path, "rb") as f:
         all_games = pickle.load(f)
 
     if not isinstance(all_games, list) or len(all_games) == 0:
-        raise ValueError(f"Expected non-empty list in {PKL_PATH}")
+        raise ValueError(f"Expected non-empty list in {pkl_path}")
+
+    total_in_pkl = len(all_games)
+    if total_in_pkl > MAX_GAMES:
+        print(f"pkl contains {total_in_pkl} games; capping to first {MAX_GAMES}")
+        all_games = all_games[:MAX_GAMES]
+    else:
+        print(f"pkl contains {total_in_pkl} games (within {MAX_GAMES} cap)")
 
     n_games = len(all_games)
     # Per-game highest tile and game length (moves = trajectory length - 1; first entry is (state, None))
@@ -70,8 +89,8 @@ def main():
     print("Saved metrics_highest_tile_vs_games.png")
     plt.close()
 
-    # --- Figure 2: Order-independent (counts and cumulative %) ---
-    fig2, (ax3, ax4) = plt.subplots(1, 2, figsize=(12, 5))
+    # --- Figure 2: Order-independent (counts) ---
+    fig2, ax3 = plt.subplots(figsize=(8, 5))
 
     # Bar chart: count of games whose max tile equals each value
     counts = np.array([(per_game_max_tile == t).sum() for t in TILE_LABELS], dtype=int)
@@ -81,17 +100,6 @@ def main():
     ax3.set_title("Counts by highest tile reached (order-independent)")
     for i, c in enumerate(counts):
         ax3.text(i, c, str(int(c)), ha="center", va="bottom", fontsize=9)
-
-    # Cumulative % of games that reached at least X (sorted ascending by max tile)
-    # For each threshold, fraction of games with max_tile >= threshold
-    thresholds = np.array(TILE_LABELS, dtype=float)
-    pct_at_least = [100 * np.sum(per_game_max_tile >= t) / n_games for t in thresholds]
-    ax4.bar(range(len(thresholds)), pct_at_least, color="coral", edgecolor="white")
-    ax4.set_xticks(range(len(thresholds)))
-    ax4.set_xticklabels([str(int(t)) for t in thresholds])
-    ax4.set_xlabel("At least tile")
-    ax4.set_ylabel("% of games")
-    ax4.set_title("% of games that reached at least this tile")
 
     plt.tight_layout()
     plt.savefig("metrics_highest_tile_distribution.png", dpi=150, bbox_inches="tight")
@@ -103,10 +111,13 @@ def main():
     ax5.scatter(game_lengths, per_game_max_tile, alpha=0.5, s=20, color="steelblue", edgecolors="white", linewidths=0.3)
     ax5.set_xlabel("Game length (number of moves)")
     ax5.set_ylabel("Highest tile reached")
-    ax5.set_yticks(TILE_LABELS)
-    ax5.set_yticklabels([str(t) for t in TILE_LABELS])
+    # Only show tile labels up to the actual max tile in the data
+    data_max = int(per_game_max_tile.max())
+    visible_labels = [t for t in TILE_LABELS if t <= data_max]
+    ax5.set_yticks(visible_labels)
+    ax5.set_yticklabels([str(t) for t in visible_labels])
     ax5.set_title("Game length vs highest tile reached")
-    ax5.set_ylim(bottom=0)
+    ax5.set_ylim(bottom=0, top=data_max * 1.1)
     ax5.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig("metrics_game_length_vs_max_tile.png", dpi=150, bbox_inches="tight")
