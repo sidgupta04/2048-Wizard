@@ -68,10 +68,10 @@ $$
 
 Smooth boards (neighboring tiles with similar values) are desirable because they make merges easier. Large differences between adjacent tiles suggest the board is fragmented and merges will be difficult.
 
-$$\[
+$$
 H_{smooth}(s) =
 -\sum_{(i,j)\sim(k,l)} \left| \log_2(board_{i,j}) - \log_2(board_{k,l}) \right|
-\]$$
+$$
 
 *Corner Bias*
 
