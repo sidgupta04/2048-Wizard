@@ -188,7 +188,7 @@ To challenge our algorithms, we experimented with having them play on a 5x5 boar
 # Evaluation
 ## Expectimax Performance
 
-<img src="Expectimax_Performance.png" width="600">
+<img src="Expectimax_Performance.png" width="800">
 
 For expectimax, the agent was able to reach the 2048 tile in about 61 percent of games. This demonstrates that the Expectimax strategy combined with our heuristics was fairly strong and capable of consistently achieving the win condition on the standard board size.
 
@@ -196,13 +196,13 @@ For 5x5, because the board is larger, there is significantly more blank space av
 
 ## DQN Performance
 
-<img src="DQN_Performance.png" width="600">
+<img src="DQN_Performance.png" width="800">
 
 For Pure DQN, the 4x4, we see that the agent reaches the 512 tile occasionally, which occurs in about 3.2 percent of games. While the model can learn useful behaviors, it struggles to consistently reach higher tiles compared to more structured approaches. This reflects the challenge of learning effective strategies in 2048 using reinforcement learning alone, where the agent must discover good board structures purely from reward signals.
 
 ## DQN on Expectimax Performance
 
-<img src="Hybrid_Performance.png" width="600">
+<img src="Hybrid_Performance.png" width="800">
 
 For the 4×4 board on the left, the hybrid model performs somewhat better than the pure DQN, reaching a maximum tile of 1024 in about 5.8 percent of games. By learning from Expectimax gameplay, the model is able to imitate stronger strategies than it would discover through reinforcement learning alone. On the right side, we observe tiles as large as 8192 being achieved. This demonstrates that the hybrid approach can learn useful strategic behavior while benefiting from the flexibility of a learned model.
 
