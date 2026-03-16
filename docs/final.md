@@ -3,12 +3,14 @@ layout: default
 title:  Final Report
 ---
 
-# Project Summary:
+# Project Summary
 2048 is a single-player puzzle game played on a 4×4 grid. At each turn, the player slides all tiles in one of four directions (up, down, left, or right) and matching tiles merge to double in value. A new tile spawns randomly after every move, and the game ends when no valid moves remain. The goal is to reach the 2048 tile, though skilled play can go well beyond it.
 
 While the rules are simple, 2048 is a surprisingly difficult problem for AI. It requires long-term planning and strategic tile management where you can't just focus on the next move, you have to think several steps ahead. Tiles also spawn randomly after each move, creating uncertainty that makes it impossible to plan a fixed strategy. On top of that, the large number of possible board states means you can't hard-code a solution that works every time.
 
 This is why we propose using AI to tackle the problem. We evaluate three approaches: Expectimax, which uses tree search to plan ahead and account for random tile spawns; Deep Q-Network (DQN), which learns a strategy entirely from experience through reinforcement learning; and a hybrid model where DQN is pretrained on Expectimax-generated decisions before being fine-tuned with RL. By comparing all three, we can study how planning depth, learned value approximation, and expert-guided initialization each contribute to solving the game.
+
+<img src="2048_gampley3.png" width="600">
 
 # Approach
 Our approach evaluates three different methods for learning to play 2048: a search-based Expectimax agent, a reinforcement-learning agent trained directly with DQN, and a hybrid model where DQN is pretrained on Expectimax-generated decisions. Running all three allows us to isolate the strengths and weaknesses of planning, reinforcement learning, and imitation-based learning within the same environment.
@@ -25,7 +27,7 @@ with γ=0.99, Adam optimizer (learning rate 1 × 10^ −4) minibatch size 64, an
 
 This setup ensures that each agent follows the same interface (same state encoding, action space, and environment dynamics), which allows for clean, reproducible comparisons. By evaluating Expectimax, pure DQN, and Expectimax-trained DQN under identical conditions, we can study how planning depth, learned value approximation, and expert-guided initialization influence performance, stability, and generalization across different game states.
 
-## How Expectimax works:
+## How Expectimax works
 Expectimax is an algorithm based on MiniMax, which is a tree based algorithm designed for two player games such as chess or backgammon. In the game of 2048, we assume the opposing player is the computer that chooses where a single spawn after each move (the one element of randomness in this game). With MiniMax, we assume that the opposing player will always make the optimal move. However, in 2048, this is not an accurate representation, as the computer chooses the location of the spawn tile randomly. 
 
 To account for this, expectimax incorporates an average tile as the opposing player, which models the average of different possibilities for spawn locations and spawn values (2 with 90% chance and 4 with 10% chance). Using a scoring function, each hypothetical board state is given a score, determined by various heuristics. These board scores are averaged across possibilities to attain a chance node score which is inserted into the tree. 
@@ -173,13 +175,13 @@ v → log₂(v)
 - Empty tiles are represented as 0
 - Log scaling stabilizes large tile magnitudes
 
-<u>Key Advantage<u>
+<u>Key Advantage:<u>
 
 The model learns a strong search-based strategy while eliminating the need for expensive tree expansion at runtime.
 
 ## 5x5 Games
 
-INSERT GIF
+![Late Game 2048](./late_game_2048.gif)
 
 To challenge our algorithms, we experimented with having them play on a 5x5 board. With significantly more tiles available (a 5x5 game has 25 tiles in contrast with the 16 in a 4x4 game), our algorithms proved they were able to achieve much higher scores. Observations of the playstyle of the game revealed several fallacies in our heuristic weighting, which we were then able to adjust. 
 
