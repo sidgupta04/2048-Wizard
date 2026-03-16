@@ -35,14 +35,12 @@ To account for this, expectimax incorporates an average tile as the opposing pla
 Markdown code for General Expectation Formula:
 
 $$
-\[
 \text{EV} = \sum_i P(\text{outcome}_i) \cdot V(\text{outcome}_i)
-\]
 $$
 
 Where:
-- $$\(P(\text{outcome}_i)\)$$ is the probability of a specific spawn
-- $$\(V(\text{outcome}_i)\)$$ is the value of the resulting board
+- $$P(\text{outcome}_i)$$ is the probability of a specific spawn
+- $$V(\text{outcome}_i)$$ is the value of the resulting board
 
 The tree is then traversed to a certain depth (we found depth 3 to be the best balance of performance and accuracy in our case) to choose the move that maximizes score. 
 
@@ -59,12 +57,12 @@ Boards with more empty spaces are better because they allow more possible merges
 
 Strong boards usually arrange tiles in a monotonic gradient (e.g., highest tile in a corner with values decreasing along rows/columns). This structure keeps large tiles together and promotes future merges instead of scattering values across the board.
 
-$$\[
+$$
 H_{mono}(s) =
 \sum_{i,j} \max(board_{i,j} - board_{i+1,j}, 0)
 +
 \sum_{i,j} \max(board_{i,j} - board_{i,j+1}, 0)
-\]$$
+$$
 
 *Smoothness*
 
@@ -186,4 +184,41 @@ The model learns a strong search-based strategy while eliminating the need for e
 ![Late Game 2048](./late_game_2048.gif)
 
 To challenge our algorithms, we experimented with having them play on a 5x5 board. With significantly more tiles available (a 5x5 game has 25 tiles in contrast with the 16 in a 4x4 game), our algorithms proved they were able to achieve much higher scores. Observations of the playstyle of the game revealed several fallacies in our heuristic weighting, which we were then able to adjust. 
+
+# Evaluation
+## Expectimax Performance
+
+![Expectimax Performance](./Expectimax_Performance.png)
+
+For expectimax, the agent was able to reach the 2048 tile in about 61 percent of games. This demonstrates that the Expectimax strategy combined with our heuristics was fairly strong and capable of consistently achieving the win condition on the standard board size.
+
+For 5x5, because the board is larger, there is significantly more blank space available for tiles to move and combine. As a result, the algorithm is able to reach much higher maximum tiles than in the standard game. The additional space allows the agent to build larger chains of merges before the board fills up, leading to much higher achievable tile values.
+
+## DQN Performance
+
+![DQN Performance](./DQN_Performance.png)
+
+For Pure DQN, the 4x4, we see that the agent reaches the 512 tile occasionally, which occurs in about 3.2 percent of games. While the model can learn useful behaviors, it struggles to consistently reach higher tiles compared to more structured approaches. This reflects the challenge of learning effective strategies in 2048 using reinforcement learning alone, where the agent must discover good board structures purely from reward signals.
+
+## DQN on Expectimax Performance
+
+![Hybrid Performance](./Hybrid_Performance.png)
+
+For the 4×4 board on the left, the hybrid model performs somewhat better than the pure DQN, reaching a maximum tile of 1024 in about 5.8 percent of games. By learning from Expectimax gameplay, the model is able to imitate stronger strategies than it would discover through reinforcement learning alone. On the right side, we observe tiles as large as 8192 being achieved. This demonstrates that the hybrid approach can learn useful strategic behavior while benefiting from the flexibility of a learned model.
+
+## More Insights
+
+One key insight from our experiments is that Expectimax consistently performs the best, but it comes with a very large computational cost. Running 190 games with Expectimax took approximately 8 to 9 days, since the algorithm performs a full tree search at every move. In contrast, the DQN trained on Expectimax can run the same 190 games in about 10 minutes, because it replaces the expensive tree search with a single forward pass through a neural network. This highlights a key tradeoff between performance and computational efficiency: search-based methods can achieve stronger play but are significantly slower than learned approximations.
+
+Another takeaway from our experiments is the difference between hand-designed strategies and learned strategies. Expectimax performs well largely because we explicitly encoded strong heuristics into the evaluation function. To help the DQN learn a similar structure, we experimented with reward shaping to guide the learning process. One reward encourages the agent to keep the largest tile in the top-left corner, which stabilizes the board and prevents the largest tile from becoming trapped. Another reward encourages monotonicity, where tile values decrease smoothly across rows or columns in a snake-like pattern. This structure helps the agent maintain future merge opportunities and avoid breaking the board into chaotic tile configurations.
+
+# Resources Used: 
+- Core Libraries: numpy, torch, random, matplotlib, pygame
+- Used a Python implementation of the 2048 game as an example for Gemini
+- Utilized PyGame and Numpy for the implementation of the 2048 Game, along with the expectimax and DQN algorithm
+- We utilized sHPC to run ~500 expectimax games for training DQN
+- DQN Resource: https://github.com/dennybritz/reinforcement-learning/tree/master/DQN
+- AI Usage
+  - Used Gemini and ChatGPT to brainstorm potential algorithms that could be used for 2048, along with intuition behind how they work. 
+  - Used Gemini to simplify an existing implementation of 2048 and configure it for use with AI agents
 
