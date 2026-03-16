@@ -3,6 +3,17 @@ layout: default
 title:  Final Report
 ---
 
+# Final Report Video
+<div style="position: relative; padding-bottom: 35%; height: 0; overflow: hidden; max-width: 100%;">
+  <iframe 
+    src="https://www.youtube.com/embed/TwYIaQIeheU"
+    title="2048 Status Video"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
 # Project Summary
 2048 is a single-player puzzle game played on a 4×4 grid. At each turn, the player slides all tiles in one of four directions (up, down, left, or right) and matching tiles merge to double in value. A new tile spawns randomly after every move, and the game ends when no valid moves remain. The goal is to reach the 2048 tile, though skilled play can go well beyond it.
 
