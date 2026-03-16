@@ -34,13 +34,15 @@ To account for this, expectimax incorporates an average tile as the opposing pla
 
 Markdown code for General Expectation Formula:
 
-$\[
+$$
+\[
 \text{EV} = \sum_i P(\text{outcome}_i) \cdot V(\text{outcome}_i)
-\]$
+\]
+$$
 
 Where:
-- $\(P(\text{outcome}_i)\)$ is the probability of a specific spawn
-- $\(V(\text{outcome}_i)\)$ is the value of the resulting board
+- $$\(P(\text{outcome}_i)\)$$ is the probability of a specific spawn
+- $$\(V(\text{outcome}_i)\)$$ is the value of the resulting board
 
 The tree is then traversed to a certain depth (we found depth 3 to be the best balance of performance and accuracy in our case) to choose the move that maximizes score. 
 
@@ -57,21 +59,21 @@ Boards with more empty spaces are better because they allow more possible merges
 
 Strong boards usually arrange tiles in a monotonic gradient (e.g., highest tile in a corner with values decreasing along rows/columns). This structure keeps large tiles together and promotes future merges instead of scattering values across the board.
 
-$\[
+$$\[
 H_{mono}(s) =
 \sum_{i,j} \max(board_{i,j} - board_{i+1,j}, 0)
 +
 \sum_{i,j} \max(board_{i,j} - board_{i,j+1}, 0)
-\]$
+\]$$
 
 *Smoothness*
 
 Smooth boards (neighboring tiles with similar values) are desirable because they make merges easier. Large differences between adjacent tiles suggest the board is fragmented and merges will be difficult.
 
-$\[
+$$\[
 H_{smooth}(s) =
 -\sum_{(i,j)\sim(k,l)} \left| \log_2(board_{i,j}) - \log_2(board_{k,l}) \right|
-\]$
+\]$$
 
 *Corner Bias*
 
